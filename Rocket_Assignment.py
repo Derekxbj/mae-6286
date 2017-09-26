@@ -20,48 +20,48 @@ h0 = 0
 v0 = 0
 
 
-def f(u):
+def f(u, t):
 
     h = u[0]
-    m_p = u[1]
-    v = u[2]
+    v = u[1]
 
     return numpy.array([v,
-                        -m_p_dot,
-                        -g + m_p_dot*v_e/(m_s + m_p) - p*v*abs(v)*A*C_D/(2*(m_s + m_p))])
+                        -g + m_p_dot(t)*v_e/(m_s + m_p(t)) - p*v*abs(v)*A*C_D/(2*(m_s + m_p(t)))])
 
 
-def euler_step(u, f, dt):
-    return u + dt*f(u)
+def euler_step(u, f, t, dt):
+    return u + dt*f(u, t)
+
+
+def m_p(t):
+    """ return the remaining weight of propellant at time t """
+    return max(m_p0 - 20*t, 0)
+
+def m_p_dot(t):
+    """ return the burning rate at time t """
+    return 20 if (t < 5) else 0
+
 
 T = 60
 dt = 0.1
 N = int(T/dt) + 1
 t = numpy.linspace(0.0, T, N)
 
-u = numpy.empty((N,3))
-u[0] = numpy.array([h0, m_p0, v0])
+u = numpy.empty((N,2))
+u[0] = numpy.array([h0, v0])
 
 for n in range(N-1):
 
-    if n < 50:
-        m_p_dot = 20
-    else:
-        m_p_dot = 0
-        m_p = 0
-        u[n,1] = 0
-
     while u[n,0] < 0:
         u[n,0] = 0
-        u[n,2] = 0
-        m_p_dot = 0
+        u[n,1] = 0
 
-    # print(n, m_p_dot, u[n,0], u[n,1],u[n,2])
-    u[n+1] = euler_step(u[n], f, dt)
+    # print(n, m_p(n/10), m_p_dot(n/10), u[n,0], u[n,1])
+    u[n+1] = euler_step(u[n], f, t[n], dt)
 
 
 h = u[:,0] # the altitude
-v = u[:,2] # the velocity
+v = u[:,1] # the velocity
 
 
 # plot the altitude w.r.t time
